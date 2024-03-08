@@ -16,11 +16,13 @@ config_mount: /etc/wireguard
 server_url: auto
 server_port: 51820
 
-peers: "1"
+peers: 1
 peers_dns: auto
 
 internal_subnet: "10.13.13.0"
-allowed_ips: 0.0.0.0/0
+allowed_ips:
+- 0.0.0.0/0
+- ::/0
 
-persistent_keepalive_peers: ""
+persistent_keepalive_peers: []
 log_confs: true

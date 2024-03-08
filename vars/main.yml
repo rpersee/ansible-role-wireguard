@@ -14,9 +14,9 @@ container_env:
     <<: *client_env
     SERVERURL: "{{ server_url }}"
     SERVERPORT: "{{ server_port }}"
-    PEERS: "{{ peers }}"
+    PEERS: "{{ (peers | join(',')) if (peers is sequence) else peers }}"
     PEERSDNS: "{{ peers_dns }}"
-    PERSISTENTKEEPALIVE_PEERS: "{{ persistent_keepalive_peers }}"
+    PERSISTENTKEEPALIVE_PEERS: "{{ persistent_keepalive_peers | join(',') }}"
     INTERNAL_SUBNET: "{{ internal_subnet }}"
-    ALLOWEDIPS: "{{ allowed_ips }}"
+    ALLOWEDIPS: "{{ allowed_ips | join(',') }}"
     LOG_CONFS: "{{ log_confs }}"
