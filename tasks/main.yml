@@ -1,2 +1,46 @@
 ---
 # tasks file for wireguard
+- name: Read system timezone
+  slurp:
+    src: /etc/timezone
+  register: _etc_timezone_b64
+  when: timezone is not defined
+
+- name: Ensure Podman is installed
+  become: true
+  package:
+    name: podman
+    state: present
+
+- name: Ensure iptables kernel module is loaded
+  become: true
+  modprobe:
+    name: ip_tables
+    state: present
+
+- name: Ensure mount points exist
+  become: true
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ state_mount }}"
+    - "{{ config_mount }}"
+
+- name: Run WireGuard container
+  become: true
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    annotation:
+      app: wireguard
+      role: "{{ wireguard_mode }}"
+    image: "{{ image_repository }}:{{ image_tag }}"
+    state: started
+    restart_policy: always
+    cap_add: "{{ container_capabilities }}"
+    env: "{{ container_env[wireguard_mode] }}"
+    ports: "{{ container_ports[wireguard_mode] }}"
+    volumes:
+      - "{{ state_mount }}:/config"
+      - "{{ config_mount }}:/config/wg_confs"

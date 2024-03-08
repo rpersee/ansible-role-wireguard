@@ -1,2 +1,26 @@
 ---
 # defaults file for wireguard
+image_repository: ghcr.io/linuxserver/wireguard
+image_tag: latest
+
+wireguard_mode: server # or client
+
+container_name: "wireguard-{{ wireguard_mode }}"
+container_capabilities:
+- NET_ADMIN
+
+state_mount: /var/lib/wireguard
+config_mount: /etc/wireguard
+
+# server mode variables
+server_url: auto
+server_port: 51820
+
+peers: "1"
+peers_dns: auto
+
+internal_subnet: "10.13.13.0"
+allowed_ips: 0.0.0.0/0
+
+persistent_keepalive_peers: ""
+log_confs: true

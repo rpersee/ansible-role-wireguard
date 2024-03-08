@@ -1,2 +1,22 @@
 ---
 # vars file for wireguard
+container_ports:
+  client: []
+  server:
+  - "{{ server_port }}:{{ server_port }}/udp"
+
+container_env:
+  client: &client_env
+    PUID: "{{ proc_uid | default(ansible_user_uid) }}"
+    PGID: "{{ proc_gid | default(ansible_user_gid) }}"
+    TZ: "{{ timezone | default(_etc_timezone_b64.content | b64decode | trim) }}"
+  server:
+    <<: *client_env
+    SERVERURL: "{{ server_url }}"
+    SERVERPORT: "{{ server_port }}"
+    PEERS: "{{ peers }}"
+    PEERSDNS: "{{ peers_dns }}"
+    PERSISTENTKEEPALIVE_PEERS: "{{ persistent_keepalive_peers }}"
+    INTERNAL_SUBNET: "{{ internal_subnet }}"
+    ALLOWEDIPS: "{{ allowed_ips }}"
+    LOG_CONFS: "{{ log_confs }}"
