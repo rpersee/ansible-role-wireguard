@@ -1,34 +1,34 @@
 ---
 # tasks file for wireguard
 - name: Add WireGuard server to inventory
-  add_host:
+  when: wireguard_mode == "client"
+  ansible.builtin.add_host:
     name: wireguard_server
     ansible_host: "{{ server_host }}"
     ansible_user: "{{ server_user }}"
   changed_when: false
-  when: wireguard_mode == "client"
 
 - name: Read system timezone
-  slurp:
+  when: timezone is not defined
+  ansible.builtin.slurp:
     src: /etc/timezone
   register: _etc_timezone_b64
-  when: timezone is not defined
 
 - name: Ensure Podman is installed
   become: true
-  package:
+  ansible.builtin.package:
     name: podman
     state: present
 
 - name: Ensure iptables kernel module is loaded
   become: true
-  modprobe:
+  community.general.modprobe:
     name: ip_tables
     state: present
 
 - name: Ensure mount points exist
   become: true
-  file:
+  ansible.builtin.file:
     path: "{{ item }}"
     state: directory
     mode: "0755"
@@ -36,19 +36,21 @@
     - "{{ state_mount }}"
     - "{{ config_mount }}"
 
-- block:
-  - name: Fetch client configuration
-    delegate_to: wireguard_server
-    slurp:
-      src: "{{ state_mount }}/{{ peer_name }}/{{ peer_name }}.conf"
-    register: _client_conf_b64
-
-  - name: Write client configuration
-    become: true
-    copy:
-      content: "{{ _client_conf_b64.content | b64decode }}"
-      dest: "{{ config_mount }}/{{ peer_name }}.conf"
+- name: Configure WireGuard client
   when: wireguard_mode == "client"
+  block:
+    - name: Fetch client configuration
+      delegate_to: wireguard_server
+      ansible.builtin.slurp:
+        src: "{{ state_mount }}/{{ peer_name }}/{{ peer_name }}.conf"
+      register: _client_conf_b64
+
+    - name: Write client configuration
+      become: true
+      ansible.builtin.copy:
+        content: "{{ _client_conf_b64.content | b64decode }}"
+        dest: "{{ config_mount }}/{{ peer_name }}.conf"
+        mode: "0644"
 
 - name: Run WireGuard container
   become: true

@@ -9,13 +9,12 @@ peer_name: "{{ ('peer' ~ peer_id) if _peer_id_is_int else peer_id }}"
 container_ports:
   client: []
   server:
-  - "{{ server_port }}:{{ server_port }}/udp"
+    - "{{ server_port }}:{{ server_port }}/udp"
 
 container_sysctl:
   client:
     net.ipv4.conf.all.src_valid_mark: 1
   server: {}
-
 container_env:
   client: &client_env
     PUID: "{{ proc_uid | default(ansible_user_uid) }}"
