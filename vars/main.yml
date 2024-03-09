@@ -1,9 +1,20 @@
 ---
 # vars file for wireguard
+_peers_is_list: "{{ peers is sequence and not peers is string }}"
+_peer_id_as_int: "{{ peer_id | int }}"
+_peer_id_is_int: "{{ peer_id == _peer_id_as_int }}"
+
+peer_name: "{{ ('peer' ~ peer_id) if _peer_id_is_int else peer_id }}"
+
 container_ports:
   client: []
   server:
   - "{{ server_port }}:{{ server_port }}/udp"
+
+container_sysctl:
+  client:
+    net.ipv4.conf.all.src_valid_mark: 1
+  server: {}
 
 container_env:
   client: &client_env
@@ -14,7 +25,7 @@ container_env:
     <<: *client_env
     SERVERURL: "{{ server_url }}"
     SERVERPORT: "{{ server_port }}"
-    PEERS: "{{ (peers | join(',')) if (peers is sequence) else peers }}"
+    PEERS: "{{ (peers | join(',')) if _peers_is_list else peers }}"
     PEERSDNS: "{{ peers_dns }}"
     PERSISTENTKEEPALIVE_PEERS: "{{ persistent_keepalive_peers | join(',') }}"
     INTERNAL_SUBNET: "{{ internal_subnet }}"

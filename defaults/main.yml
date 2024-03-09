@@ -26,3 +26,8 @@ allowed_ips:
 
 persistent_keepalive_peers: []
 log_confs: true
+
+# client mode variables
+peer_id: "{{ peers[0] if _peers_is_list else 1 }}"
+server_user: "{{ ansible_user_id }}"
+server_host: "{{ server_url }}"

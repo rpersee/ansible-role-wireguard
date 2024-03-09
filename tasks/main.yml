@@ -1,5 +1,13 @@
 ---
 # tasks file for wireguard
+- name: Add WireGuard server to inventory
+  add_host:
+    name: wireguard_server
+    ansible_host: "{{ server_host }}"
+    ansible_user: "{{ server_user }}"
+  changed_when: false
+  when: wireguard_mode == "client"
+
 - name: Read system timezone
   slurp:
     src: /etc/timezone
@@ -28,6 +36,20 @@
     - "{{ state_mount }}"
     - "{{ config_mount }}"
 
+- block:
+  - name: Fetch client configuration
+    delegate_to: wireguard_server
+    slurp:
+      src: "{{ state_mount }}/{{ peer_name }}/{{ peer_name }}.conf"
+    register: _client_conf_b64
+
+  - name: Write client configuration
+    become: true
+    copy:
+      content: "{{ _client_conf_b64.content | b64decode }}"
+      dest: "{{ config_mount }}/{{ peer_name }}.conf"
+  when: wireguard_mode == "client"
+
 - name: Run WireGuard container
   become: true
   containers.podman.podman_container:
@@ -39,6 +61,7 @@
     state: started
     restart_policy: always
     cap_add: "{{ container_capabilities }}"
+    sysctl: "{{ container_sysctl[wireguard_mode] }}"
     env: "{{ container_env[wireguard_mode] }}"
     ports: "{{ container_ports[wireguard_mode] }}"
     volumes:
